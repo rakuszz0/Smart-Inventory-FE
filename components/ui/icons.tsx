@@ -14,6 +14,7 @@ type IconName =
   | "bell"
   | "menu"
   | "arrow"
+  | "arrow-left"
   | "plus"
   | "more"
   | "close"
@@ -98,6 +99,7 @@ const paths: Record<IconName, React.ReactNode> = {
     </>
   ),
   arrow: <path d="M5 12h14m-6-6 6 6-6 6" />,
+  "arrow-left": <path d="M19 12H5m6 6-6-6 6-6" />,
   plus: <path d="M12 5v14M5 12h14" />,
   more: (
     <>

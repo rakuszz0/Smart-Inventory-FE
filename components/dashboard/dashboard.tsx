@@ -4,10 +4,10 @@ import Link from "next/link";
 import { Icon } from "@/components/ui/icons";
 
 const stats = [
-  { label: "Total Produk", value: "1,248", note: "+8.2%", icon: "box" as const, color: "blue" },
-  { label: "Total Supplier", value: "86", note: "+3.4%", icon: "truck" as const, color: "violet" },
-  { label: "Total Pelanggan", value: "2,441", note: "+12.5%", icon: "users" as const, color: "amber" },
-  { label: "Transaksi Bulan Ini", value: "342", note: "+18.7%", icon: "receipt" as const, color: "emerald" },
+  { label: "Total Produk", value: "1,248", note: "+8.2%", icon: "box" as const, color: "blue", href: "/products" },
+  { label: "Total Supplier", value: "86", note: "+3.4%", icon: "truck" as const, color: "violet", href: "/suppliers" },
+  { label: "Total Pelanggan", value: "2,441", note: "+12.5%", icon: "users" as const, color: "amber", href: "/customers" },
+  { label: "Transaksi Bulan Ini", value: "342", note: "+18.7%", icon: "receipt" as const, color: "emerald", href: "/transactions" },
 ];
 
 const transactions = [
@@ -58,9 +58,10 @@ export function Dashboard() {
       {/* Stats cards */}
       <section className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
         {stats.map((stat) => (
-          <article
+          <Link
             key={stat.label}
-            className="rounded-2xl border border-slate-100 bg-white p-5 shadow-sm"
+            href={stat.href}
+            className="group rounded-2xl border border-slate-100 bg-white p-5 shadow-sm transition hover:-translate-y-0.5 hover:border-blue-200 hover:shadow-md"
           >
             <div className="flex items-start justify-between">
               <div
@@ -72,24 +73,35 @@ export function Dashboard() {
                 ↑ {stat.note}
               </span>
             </div>
-            <p className="mt-5 text-2xl font-bold tracking-tight">{stat.value}</p>
-            <p className="mt-1 text-xs text-slate-500">{stat.label}</p>
-          </article>
+            <p className="mt-5 text-2xl font-bold tracking-tight text-slate-900 group-hover:text-blue-600 transition">
+              {stat.value}
+            </p>
+            <div className="mt-1 flex items-center gap-1 text-xs text-slate-500">
+              <span>{stat.label}</span>
+              <Icon name="arrow" className="h-3 w-3 opacity-0 -translate-x-1 group-hover:opacity-100 group-hover:translate-x-0 transition" />
+            </div>
+          </Link>
         ))}
       </section>
 
       {/* Charts section */}
       <section className="grid gap-5 xl:grid-cols-5">
         {/* Sales chart */}
-        <article className="rounded-2xl border border-slate-100 bg-white p-5 shadow-sm xl:col-span-3">
+        <Link
+          href="/transactions"
+          className="group rounded-2xl border border-slate-100 bg-white p-5 shadow-sm transition hover:border-blue-200 hover:shadow-md xl:col-span-3"
+        >
           <div className="flex items-center justify-between">
             <div>
-              <h2 className="font-bold">Penjualan & Pembelian</h2>
+              <h2 className="font-bold group-hover:text-blue-600 transition">Penjualan & Pembelian</h2>
               <p className="mt-1 text-xs text-slate-400">Ringkasan 6 bulan terakhir</p>
             </div>
-            <select className="rounded-lg border border-slate-200 px-2 py-1.5 text-xs text-slate-500 outline-none">
-              <option>6 Bulan Terakhir</option>
-            </select>
+            <div className="flex items-center gap-2">
+              <span className="text-xs font-semibold text-blue-600">
+                Lihat detail
+              </span>
+              <Icon name="arrow" className="h-3.5 w-3.5 text-blue-600" />
+            </div>
           </div>
 
           {/* Bar chart placeholder */}
@@ -98,11 +110,11 @@ export function Dashboard() {
               <div key={i} className="flex flex-1 items-end gap-1">
                 <div
                   style={{ height: `${height}%` }}
-                  className="w-1/2 rounded-t bg-blue-500"
+                  className="w-1/2 rounded-t bg-blue-500 group-hover:bg-blue-600 transition"
                 />
                 <div
                   style={{ height: `${Math.max(18, height - (i % 3 ? 20 : 8))}%` }}
-                  className="w-1/2 rounded-t bg-blue-100"
+                  className="w-1/2 rounded-t bg-blue-100 group-hover:bg-blue-200 transition"
                 />
               </div>
             ))}
@@ -115,29 +127,32 @@ export function Dashboard() {
             <span>Jun</span>
             <span>Jul</span>
           </div>
-        </article>
+        </Link>
 
         {/* Order status */}
-        <article className="rounded-2xl border border-slate-100 bg-white p-5 shadow-sm xl:col-span-2">
+        <Link
+          href="/transactions"
+          className="group rounded-2xl border border-slate-100 bg-white p-5 shadow-sm transition hover:border-blue-200 hover:shadow-md xl:col-span-2"
+        >
           <div className="flex items-center justify-between">
             <div>
-              <h2 className="font-bold">Status Pesanan</h2>
+              <h2 className="font-bold group-hover:text-blue-600 transition">Status Pesanan</h2>
               <p className="mt-1 text-xs text-slate-400">Bulan ini</p>
             </div>
-            <button className="text-xs font-semibold text-blue-600">Lihat detail</button>
+            <span className="text-xs font-semibold text-blue-600">Lihat detail</span>
           </div>
 
           <div className="mt-7 flex items-center justify-center gap-6">
             {/* Donut chart */}
             <div
-              className="relative grid h-35 w-35 place-items-center rounded-full"
+              className="relative grid h-35 w-35 place-items-center rounded-full transition group-hover:scale-105"
               style={{
                 background:
                   "conic-gradient(#3b82f6 0 48%, #8b5cf6 48% 75%, #f59e0b 75% 90%, #e2e8f0 90% 100%)",
               }}
             >
               <div className="grid h-23 w-23 place-items-center rounded-full bg-white text-center">
-                <b className="text-xl">342</b>
+                <b className="text-xl group-hover:text-blue-600 transition">342</b>
                 <span className="-mt-1 text-[10px] text-slate-400">Total</span>
               </div>
             </div>
@@ -150,17 +165,20 @@ export function Dashboard() {
                 ["Menunggu", "51", "bg-amber-400"],
                 ["Dibatalkan", "35", "bg-slate-300"],
               ].map(([label, n, color]) => (
-                <div className="flex w-27 items-center justify-between" key={label}>
-                  <span className="flex items-center gap-2 text-slate-500">
+                <div
+                  key={label}
+                  className="flex w-27 items-center justify-between rounded-lg px-2 py-1 transition hover:bg-slate-50"
+                >
+                  <span className="flex items-center gap-2 text-slate-500 group-hover:text-slate-700">
                     <i className={`h-2 w-2 rounded-full ${color}`} />
                     {label}
                   </span>
-                  <b>{n}</b>
+                  <b className="group-hover:text-blue-600">{n}</b>
                 </div>
               ))}
             </div>
           </div>
-        </article>
+        </Link>
       </section>
 
       {/* Transactions & Stock section */}
@@ -189,32 +207,48 @@ export function Dashboard() {
                 </tr>
               </thead>
               <tbody>
-                {transactions.map(([id, name, type, total, status, time]) => (
-                  <tr key={id} className="border-t border-slate-50 text-xs">
+                {transactions.map(([id, name, type, total, status, time], i) => (
+                  <tr
+                    key={id}
+                    className="border-t border-slate-50 text-xs transition hover:bg-slate-50 cursor-pointer"
+                    onClick={() => { window.location.href = `/transactions/${i + 1}`; }}
+                  >
                     <td className="px-5 py-3.5">
-                      <b className="block text-slate-700">{id}</b>
-                      <span className="text-[10px] text-slate-400">{time}</span>
+                      <Link href={`/transactions/${i + 1}`} className="block text-slate-700 hover:text-blue-600">
+                        <b className="block">{id}</b>
+                        <span className="text-[10px] text-slate-400">{time}</span>
+                      </Link>
                     </td>
                     <td className="px-3 py-3.5">
-                      <span className="block font-medium">{name}</span>
-                      <span className="text-[10px] text-slate-400">{type}</span>
+                      <Link href={`/transactions/${i + 1}`} className="block hover:text-blue-600">
+                        <span className="block font-medium">{name}</span>
+                        <span className="text-[10px] text-slate-400">{type}</span>
+                      </Link>
                     </td>
-                    <td className="px-3 py-3.5 font-semibold">{total}</td>
                     <td className="px-3 py-3.5">
-                      <span
-                        className={`rounded-full px-2 py-1 text-[10px] font-semibold ${
-                          status === "Selesai"
-                            ? "bg-emerald-50 text-emerald-600"
-                            : status === "Diproses"
-                              ? "bg-blue-50 text-blue-600"
-                              : "bg-amber-50 text-amber-600"
-                        }`}
-                      >
-                        {status}
-                      </span>
+                      <Link href={`/transactions/${i + 1}`} className="block font-semibold hover:text-blue-600">
+                        {total}
+                      </Link>
+                    </td>
+                    <td className="px-3 py-3.5">
+                      <Link href={`/transactions/${i + 1}`} className="block">
+                        <span
+                          className={`inline-block rounded-full px-2 py-1 text-[10px] font-semibold ${
+                            status === "Selesai"
+                              ? "bg-emerald-50 text-emerald-600"
+                              : status === "Diproses"
+                                ? "bg-blue-50 text-blue-600"
+                                : "bg-amber-50 text-amber-600"
+                          }`}
+                        >
+                          {status}
+                        </span>
+                      </Link>
                     </td>
                     <td className="px-5 py-3.5 text-slate-400">
-                      <Icon name="more" className="h-4 w-4" />
+                      <Link href={`/transactions/${i + 1}`} className="block hover:text-blue-600">
+                        <Icon name="arrow" className="h-4 w-4" />
+                      </Link>
                     </td>
                   </tr>
                 ))}
@@ -236,32 +270,39 @@ export function Dashboard() {
           </div>
 
           <div className="divide-y divide-slate-50">
-            {stock.map(([name, code, current, min, status]) => (
-              <div className="flex items-center gap-3 px-5 py-3" key={code}>
-                <div className="grid h-9 w-9 place-items-center rounded-lg bg-slate-100 text-slate-500">
+            {stock.map(([name, code, current, min, status], i) => (
+              <Link
+                href={`/products/${i + 1}`}
+                key={code}
+                className="flex items-center gap-3 px-5 py-3 transition hover:bg-slate-50 group"
+              >
+                <div className="grid h-9 w-9 place-items-center rounded-lg bg-slate-100 text-slate-500 group-hover:bg-blue-50 group-hover:text-blue-600 transition">
                   <Icon name="box" className="h-4 w-4" />
                 </div>
                 <div className="min-w-0 flex-1">
-                  <p className="truncate text-xs font-semibold">{name}</p>
+                  <p className="truncate text-xs font-semibold group-hover:text-blue-600 transition">{name}</p>
                   <p className="mt-0.5 text-[10px] text-slate-400">
                     {code} · Min. stok: {min}
                   </p>
                 </div>
-                <div className="text-right">
-                  <b
-                    className={`text-xs ${
-                      status === "Kritis"
-                        ? "text-red-500"
-                        : status === "Rendah"
-                          ? "text-amber-500"
-                          : "text-emerald-500"
-                    }`}
-                  >
-                    {current} unit
-                  </b>
-                  <p className="mt-0.5 text-[10px] text-slate-400">{status}</p>
+                <div className="flex items-center gap-2">
+                  <div className="text-right">
+                    <b
+                      className={`text-xs ${
+                        status === "Kritis"
+                          ? "text-red-500"
+                          : status === "Rendah"
+                            ? "text-amber-500"
+                            : "text-emerald-500"
+                      }`}
+                    >
+                      {current} unit
+                    </b>
+                    <p className="mt-0.5 text-[10px] text-slate-400">{status}</p>
+                  </div>
+                  <Icon name="arrow" className="h-3.5 w-3.5 text-slate-300 group-hover:text-blue-500 group-hover:translate-x-0.5 transition" />
                 </div>
-              </div>
+              </Link>
             ))}
           </div>
         </article>
