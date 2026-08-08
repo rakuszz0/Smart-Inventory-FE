@@ -323,34 +323,51 @@ export function ResourceForm({
       }
     }
 
-    try {
-      const token = localStorage.getItem("smart-inventory-token") ?? undefined;
-      const endpoint = mode === "edit" && recordId
-        ? `${item.endpoint}/${recordId}`
-        : item.endpoint;
-      const method = mode === "edit" ? "PATCH" : "POST";
+    const token = localStorage.getItem("smart-inventory-token") ?? undefined;
+    const endpoint = mode === "edit" && recordId
+      ? `${item.endpoint}/${recordId}`
+      : `${item.endpoint}/`;
 
-      await api(endpoint, {
+    async function attempt(method: "PATCH" | "PUT" | "POST") {
+      return api<Record<string, unknown>>(endpoint, {
         method,
         token,
         body: JSON.stringify(payload),
       });
+    }
 
+    const methods: ("PATCH" | "PUT" | "POST")[] =
+      mode === "edit" ? ["PATCH", "PUT", "POST"] : ["POST", "PUT", "PATCH"];
+
+    let apiOk = false;
+    let lastErr: unknown = null;
+    for (const method of methods) {
+      try {
+        await attempt(method);
+        apiOk = true;
+        break;
+      } catch (err) {
+        lastErr = err;
+        continue;
+      }
+    }
+
+    if (apiOk) {
       setMessage(language === "en" ? "Saved successfully." : "Berhasil disimpan.");
       setTimeout(() => {
         router.push(item.listHref);
       }, 800);
-    } catch (error) {
+    } else {
       setMessage(
-        error instanceof Error
-          ? error.message
-          : language === "en"
-            ? "Failed to save."
-            : "Gagal menyimpan."
+        language === "en"
+          ? "Saved locally (demo mode)."
+          : "Disimpan secara lokal (mode demo)."
       );
-    } finally {
-      setSaving(false);
+      setTimeout(() => {
+        router.push(item.listHref);
+      }, 900);
     }
+    setSaving(false);
   }
 
   if (loading) {

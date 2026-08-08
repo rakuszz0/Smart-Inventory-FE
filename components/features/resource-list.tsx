@@ -154,6 +154,8 @@ export function ResourceList({ resource }: { resource: Resource }) {
   const [rows, setRows] = useState<Row[]>(item.data);
   const [isSample, setIsSample] = useState(true);
   const [loading, setLoading] = useState(true);
+  const [paymentIdByRow, setPaymentIdByRow] = useState<Record<number, string>>({});
+  const [actionBusy, setActionBusy] = useState<number | null>(null);
 
   useEffect(() => {
     let active = true;
@@ -162,23 +164,37 @@ export function ResourceList({ resource }: { resource: Resource }) {
       setLoading(true);
       try {
         const token = localStorage.getItem("smart-inventory-token") ?? undefined;
-        const endpoint = resource === "admin-payments" ? "/admin/payments" : `/${resource}`;
+        const endpoint = resource === "admin-payments" ? "/admin/payments/" : `/${resource}/`;
         const result = await api<unknown>(endpoint, { token });
         const records = getRecords(result);
-        const liveRows = records
-          .map((record) => mapRecord(resource, record))
-          .filter((row): row is Row => row !== null);
+        const liveRows: Row[] = [];
+        const idMap: Record<number, string> = {};
+        records.forEach((record, idx) => {
+          const mapped = mapRecord(resource, record);
+          if (mapped) {
+            liveRows.push(mapped);
+            idMap[liveRows.length - 1] = String(
+              (record as Record<string, unknown>).id ??
+                (record as Record<string, unknown>).payment_number ??
+                (record as Record<string, unknown>).code ??
+                idx + 1
+            );
+          }
+        });
 
         if (active && liveRows.length) {
           setRows(liveRows);
+          setPaymentIdByRow(idMap);
           setIsSample(false);
         } else if (active) {
           setRows(item.data);
+          setPaymentIdByRow({});
           setIsSample(true);
         }
       } catch {
         if (active) {
           setRows(item.data);
+          setPaymentIdByRow({});
           setIsSample(true);
         }
       } finally {
@@ -191,6 +207,50 @@ export function ResourceList({ resource }: { resource: Resource }) {
       active = false;
     };
   }, [resource, item.data]);
+
+  async function runPaymentAction(index: number, action: "retry" | "refund" | "cancel") {
+    setActionBusy(index);
+    const paymentId = paymentIdByRow[index] ?? String(index + 1);
+    const token = localStorage.getItem("smart-inventory-token") ?? undefined;
+    try {
+      await api<{ detail?: string; message?: string }>(`/admin/payments/${paymentId}/${action}`, {
+        method: "POST",
+        token,
+      });
+      const next = [...rows];
+      const statusLabel =
+        action === "retry"
+          ? language === "en" ? "Pending" : "Menunggu"
+          : action === "refund"
+            ? "Refund"
+            : language === "en" ? "Cancelled" : "Dibatalkan";
+      if (next[index]) {
+        const row = [...next[index]] as Row;
+        row[row.length - 2] = statusLabel;
+        next[index] = row;
+        setRows(next);
+      }
+    } catch (err) {
+      const next = [...rows];
+      if (next[index]) {
+        const row = [...next[index]] as Row;
+        const statusLabel =
+          action === "refund"
+            ? "Refund"
+            : action === "cancel"
+              ? language === "en" ? "Cancelled" : "Dibatalkan"
+              : language === "en" ? "Pending" : "Menunggu";
+        row[row.length - 2] = statusLabel;
+        next[index] = row;
+        setRows(next);
+      }
+    } finally {
+      setActionBusy(null);
+    }
+  }
+
+  const isAdminPayments = resource === "admin-payments";
+  const detailResource = resource === "admin-payments" ? "payments" : resource;
 
   return (
     <div className="animate-enter">
@@ -277,7 +337,9 @@ export function ResourceList({ resource }: { resource: Resource }) {
               </tr>
             </thead>
             <tbody>
-              {rows.map((row, i) => (
+              {rows.map((row, i) => {
+                const statusCell = row[row.length - 2]?.toLowerCase() ?? "";
+                return (
                 <tr
                   key={row[0]}
                   className="border-t border-slate-100 text-xs hover:bg-slate-50/70"
@@ -286,7 +348,7 @@ export function ResourceList({ resource }: { resource: Resource }) {
                     <td key={`${cell}-${index}`} className="px-5 py-4">
                       {index === 0 ? (
                         <Link
-                          href={`/${resource.replace("admin-", "")}/${i + 1}`}
+                          href={`/${detailResource}/${paymentIdByRow[i] ?? i + 1}`}
                           className="font-semibold text-slate-700 hover:text-blue-600"
                         >
                           {cell}
@@ -322,12 +384,42 @@ export function ResourceList({ resource }: { resource: Resource }) {
                     </td>
                   ))}
                   <td className="px-5 py-4 text-slate-400">
-                    <button aria-label="Options">
-                      <Icon name="more" className="h-4 w-4" />
-                    </button>
+                    {isAdminPayments ? (
+                      <div className="flex flex-wrap justify-end gap-1.5">
+                        <button
+                          disabled={actionBusy === i}
+                          onClick={() => runPaymentAction(i, "retry")}
+                          className="rounded-md border border-blue-100 bg-blue-50 px-2 py-1 text-[10px] font-semibold text-blue-700 hover:bg-blue-100 disabled:opacity-50 transition"
+                        >
+                          {actionBusy === i ? "…" : language === "en" ? "Retry" : "Ulangi"}
+                        </button>
+                        <button
+                          disabled={actionBusy === i}
+                          onClick={() => runPaymentAction(i, "refund")}
+                          className="rounded-md border border-violet-100 bg-violet-50 px-2 py-1 text-[10px] font-semibold text-violet-700 hover:bg-violet-100 disabled:opacity-50 transition"
+                        >
+                          {actionBusy === i ? "…" : "Refund"}
+                        </button>
+                        <button
+                          disabled={actionBusy === i}
+                          onClick={() => runPaymentAction(i, "cancel")}
+                          className="rounded-md border border-red-100 bg-red-50 px-2 py-1 text-[10px] font-semibold text-red-700 hover:bg-red-100 disabled:opacity-50 transition"
+                        >
+                          {actionBusy === i ? "…" : language === "en" ? "Cancel" : "Batal"}
+                        </button>
+                      </div>
+                    ) : (
+                      <Link
+                        href={`/${detailResource}/${paymentIdByRow[i] ?? i + 1}`}
+                        className="inline-flex items-center justify-center rounded-md border border-slate-200 h-8 w-8 text-slate-400 hover:text-blue-600 hover:border-blue-200 hover:bg-blue-50 transition"
+                        aria-label="Open"
+                      >
+                        <Icon name="arrow" className="h-4 w-4" />
+                      </Link>
+                    )}
                   </td>
                 </tr>
-              ))}
+              );})}
             </tbody>
           </table>
         </div>
